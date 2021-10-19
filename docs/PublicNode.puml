@@ -1,0 +1,124 @@
+@startuml
+    skinparam linetype ortho
+
+    class AuthData{
+        NickName : string
+        PublicKey : string
+        SecretMessage : string
+    }
+    interface NetworkListener{
+        StartListening() (error)
+        BindHandler(string path, h RequestContainer) (error)
+    }
+    interface NetworkSender{
+        SendMessage(n Node, msg Responder) (error)
+    }
+    interface Responder{
+        ToJSON() (string)
+    }
+    interface RequestContainer{
+        GetNext() (interface{})
+    }
+    class Network{
+        NewNetwork(s *NetworkSender, l *NetworkListener) (*Network)) <<static>>
+    }
+    class Auth{
+        NewAuth(p *AuthPersistence) (*Auth) <<static>>
+        CheckAuth(n Node)
+        CreateAuth(n Node)
+    }
+    interface AuthPersistence{
+        GetAuth() (AuthData, error);
+        SaveAuth(d AuthData, error)
+    }
+    class IntegrityManager{
+        //TODO
+    }
+    class Composer{
+        l *log.Logger
+        c *Config
+        cm *ConnectionManager
+        im *IntegrityManager
+        NewComposer(c *ConnectionManager, i *IntegrityManager, lo *log.Logger) (*Composer) <<static>>
+        Start()
+    }
+    class Config{
+        NewConfig() <<static>>
+        Load(path string)
+    }
+    class ConnectionManager{
+        NewConnectionManager(n *Network, a *Auth) (*ConnectionManager) <<static>>
+        InitConnectionHandler()
+    }
+
+    class Node{
+        NickName : string
+        PublicKey : string
+        Hostname : string
+        Note : string
+        Avatar : Image
+        Status : NodeStatus
+        Type : NodeType
+    }
+    enum NodeType{
+        CLIENT
+        PUBLIC
+    }
+    enum NodeStatus{
+        ACTIVE
+        LOST
+        OFFLINE
+    }
+
+    class Validation{
+        EncryptedMessage : string
+    }
+    class DestinationSearch{
+        Address : string
+    }
+    enum ErrorCode{
+    }
+    class Error{
+        Code : ErrorCode
+        Message : string
+    }
+
+    ErrorCode -left-> Error
+
+    Responder <|.. Validation
+    Responder <|.. DestinationSearch
+    Responder <|.. Error
+
+    Validation -left-> ConnectionManager
+    DestinationSearch -left-> ConnectionManager
+    Error --> ConnectionManager
+
+    NodeStatus -down-o Node
+    NodeType -down-o Node
+
+    RequestContainer -->NetworkListener
+    Node -right-> NetworkListener
+    Node --> NetworkSender
+    Node -left-> IntegrityManager
+    Node --> Auth
+
+    NetworkListener <|.. Network
+    NetworkSender <|.. Network
+    Network ---o IntegrityManager
+    Network -up--o ConnectionManager
+
+    Responder -left-> NetworkSender
+
+    Auth o-- AuthPersistence
+    ConnectionManager o- Auth
+
+    IntegrityManager -right-o Composer
+    ConnectionManager -left-o Composer
+    Config -up-o Composer
+
+    Node --> ConnectionManager
+
+    AuthData --> AuthPersistence
+    AuthData --> Auth
+
+@enduml

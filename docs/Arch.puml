@@ -1,0 +1,55 @@
+@startuml
+participant "Source Node" as SN
+participant "Tor connection" as TC
+participant "Public Node" as PN
+participant "Destination Node" as DN
+
+group Tor connection initialization
+    SN -> TC : Init Tor connection
+    activate SN
+    activate TC
+    TC -> SN : Connection initialized
+end
+group Register client
+    SN -> TC : Ask public node for register
+    TC -> PN : Transfer client request
+    activate PN
+    PN -> PN : Create encrypted message \nwith client public key
+    PN -> TC : Return \nencrypted message
+    TC -> SN : Return \nencrypted message
+    SN -> SN : Decrypt message with private key
+    SN -> TC : Return decrypted message
+    TC -> PN : Transfer client message
+    PN -> PN : Save client public address
+    PN -> TC : Connection successful
+    deactivate PN
+    TC -> SN : Connection successful
+end
+group Connecting to destination node
+    group Searching dst address
+        SN -> TC : Get dst address by id
+        TC -> PN : Transfer client request
+    else Address found
+        activate PN
+        PN -> PN : Find dst node address
+        PN -> TC : Return dst address
+        TC -> SN : Return dst address
+    else Public node can't find dst address
+        PN -> PN : Find dst node address
+        PN -> TC : Return error
+        deactivate PN
+        TC -> SN : Return error
+        SN -> SN : Change public node \nand repeat search
+    end
+    group Sending request
+        SN -> TC : Send request to dst node
+        TC -> DN : Transfer client request
+        activate DN
+        DN -> DN : Validate source
+        DN -> DN : Give request \nto a service
+        DN -> TC : Return response
+        TC -> SN : Return response
+    end
+end
+
+@enduml

@@ -1,0 +1,13 @@
+{
+  "logging": {
+    "log_level": "DEBUG"
+  },
+  "network_configuration": {
+    "address": "127.0.0.1:8000"
+  },
+  "persistence": {
+    "auth": {
+      "connection_string": "auth.db"
+    }
+  }
+}
