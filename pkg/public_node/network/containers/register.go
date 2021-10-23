@@ -5,11 +5,14 @@ import (
 	"github.com/telf01/soo/pkg/public_node/network/containers/requests"
 	"io"
 	"io/ioutil"
+	"net/http"
+	"sync"
 )
 
 type RegisterWrapper struct {
-	R requests.Register
-	W io.Writer
+	R  requests.Register
+	W  http.ResponseWriter
+	WG *sync.WaitGroup
 }
 
 type Register struct {
@@ -29,7 +32,7 @@ func (r *Register) GetChan() chan interface{} {
 }
 
 // ParseNext creates and adding another RegisterWrapper object to r.waiting.
-func (r *Register) ParseNext(writer io.Writer, reader *io.ReadCloser) error {
+func (r *Register) ParseNext(writer http.ResponseWriter, reader *io.ReadCloser, wg *sync.WaitGroup) error {
 	bytes, err := ioutil.ReadAll(*reader)
 	if err != nil {
 		return err
@@ -44,6 +47,7 @@ func (r *Register) ParseNext(writer io.Writer, reader *io.ReadCloser) error {
 	rw := RegisterWrapper{
 		R: reg,
 		W: writer,
+		WG: wg,
 	}
 
 	r.waiting <- rw

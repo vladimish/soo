@@ -7,6 +7,7 @@ import (
 	"github.com/telf01/soo/pkg/public_node/network"
 	"github.com/telf01/soo/pkg/public_node/network/containers"
 	"github.com/telf01/soo/pkg/public_node/network/interfaces"
+	node_models "github.com/telf01/soo/pkg/public_node/node/models"
 	"github.com/telf01/soo/pkg/public_node/persistence/auth_db"
 	"net/http"
 )
@@ -48,17 +49,25 @@ func (cm *ConnectionManager) HandleRegister(c chan interface{}) {
 		if err != nil {
 			logger.L.Sugar().Error(err)
 		}
-		if node != nil {
-			authMessage, err := cm.a.BuildAuthMessage(node)
-			if err != nil {
-				logger.L.Sugar().Error(err)
+		if node == nil {
+			n := &node_models.Node{
+				NickName: rc.R.NickName,
+				Hostname: rc.R.Hostname,
+				Status:   node_models.REGISTRATION,
 			}
-			err = cm.n.SendMessage(node, authMessage)
-			if err != nil {
-				logger.L.Sugar().Error(err)
-			}
-		} else {
-			// TODO: Save auth and send it to user.
+			cm.a.SaveNode(n)
+			node = n
 		}
+
+		ad, err := cm.a.CreateAuth(node, rc.R.Key)
+		authMessage, err := cm.a.BuildAuthMessage(*ad)
+		if err != nil {
+			logger.L.Sugar().Error(err)
+		}
+		err = cm.n.SendMessage(rc.W, authMessage)
+		if err != nil {
+			logger.L.Sugar().Error(err)
+		}
+		rc.WG.Done()
 	}
 }

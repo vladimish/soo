@@ -2,6 +2,7 @@ package auth_db
 
 import (
 	"github.com/telf01/soo/pkg/public_node/auth/models"
+	node_models "github.com/telf01/soo/pkg/public_node/node/models"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -29,18 +30,44 @@ func initializeDB(connectionString string) (*gorm.DB, error) {
 	}
 
 	db.AutoMigrate(&models.AuthData{})
+	db.AutoMigrate(node_models.Node{})
 	return db, nil
 }
 
-func (a *DB) GetAuthData(nickName string) (*models.AuthData, error){
+func (a *DB) GetNode(nickName string) (*node_models.Node, error) {
+	n := &node_models.Node{}
+	tx := a.db.Where(node_models.Node{NickName: nickName}).Take(n)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	return n, nil
+}
+
+func (a *DB) SaveNode(node *node_models.Node) error {
+	tx := a.db.Save(node)
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	return nil
+}
+
+
+func (a *DB) GetAuthData(node node_models.Node) (*models.AuthData, error) {
 	ad := &models.AuthData{}
-	tx := a.db.First(ad, "NickName = ?", nickName)
-	if tx.Error != nil{
+	tx := a.db.Where(models.AuthData{Node: node}).Take(ad)
+	if tx.Error != nil {
 		return nil, tx.Error
 	}
 	return ad, nil
 }
 
-func (a *DB) SaveAuth(d *models.AuthData) error{
-	panic("NOT YET IMPLEMENTED")
+func (a *DB) SaveAuth(d *models.AuthData) error {
+	tx := a.db.Save(d)
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	return nil
 }

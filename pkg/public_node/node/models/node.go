@@ -1,15 +1,17 @@
 package models
 
 import (
-	"image"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Status string
 
 const (
-	ACTIVE  Status = "ACTIVE"
-	LOST    Status = "LOST"
-	OFFLINE Status = "OFFLINE"
+	REGISTRATION Status = "REGISTRATION"
+	ACTIVE       Status = "ACTIVE"
+	LOST         Status = "LOST"
+	OFFLINE      Status = "OFFLINE"
 )
 
 type Type string
@@ -20,11 +22,11 @@ const (
 )
 
 type Node struct {
-	NickName  string
-	PublicKey string
-	Hostname  string
-	Note      string
-	Avatar *image.Image
-	Status Status
-	Type   Type
+	gorm.Model
+	NickName   string `gorm:"size:16; unique"`
+	Hostname   string
+	Note       string
+	AvatarPath uuid.UUID
+	Status     Status
+	Type       Type
 }

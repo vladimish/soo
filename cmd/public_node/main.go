@@ -26,7 +26,7 @@ func main() {
 	logger.Initialize()
 
 	// Initialize auth database connection.
-	DB, err := auth_db.NewDB("auth_db.db")
+	DB, err := auth_db.NewDB("auth.db")
 	if err != nil {
 		logger.L.Sugar().Fatal("Can't connect to database.")
 	}

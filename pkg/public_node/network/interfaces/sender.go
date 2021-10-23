@@ -5,5 +5,5 @@ import (
 )
 
 type Sender interface {
-	SendMessage(n *models.Node, msg *Responder) error
+	SendMessage(n *models.Node, msg Responder) error
 }
