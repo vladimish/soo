@@ -1,7 +1,6 @@
 package requests
 
 type Register struct {
-	NickName string `json:"nick_name"`
-	Hostname string `json:"hostname"`
+	Nickname string `json:"nickname"`
 	Key      string `json:"key"`
 }

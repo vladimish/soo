@@ -1,7 +1,7 @@
 package interfaces
 
 import (
-	"github.com/telf01/soo/pkg/public_node/node/models"
+	"github.com/vladimish/soo/pkg/public_node/node/models"
 )
 
 type Sender interface {

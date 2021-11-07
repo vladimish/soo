@@ -2,7 +2,7 @@ package responses
 
 import (
 	"encoding/json"
-	"github.com/telf01/soo/pkg/logger"
+	"github.com/vladimish/soo/pkg/logger"
 )
 
 type ErrorCode string

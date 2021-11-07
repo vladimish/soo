@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"github.com/telf01/soo/pkg/configurator"
-	"github.com/telf01/soo/pkg/logger"
-	"github.com/telf01/soo/pkg/public_node/auth"
-	"github.com/telf01/soo/pkg/public_node/network"
-	"github.com/telf01/soo/pkg/public_node/node"
-	"github.com/telf01/soo/pkg/public_node/persistence/auth_db"
+	"github.com/vladimish/soo/pkg/configurator"
+	"github.com/vladimish/soo/pkg/logger"
+	"github.com/vladimish/soo/pkg/public_node/auth"
+	"github.com/vladimish/soo/pkg/public_node/network"
+	"github.com/vladimish/soo/pkg/public_node/node"
+	"github.com/vladimish/soo/pkg/public_node/persistence/auth_db"
 	"log"
 	"net/http"
 	"os"
@@ -32,7 +32,7 @@ func main() {
 	}
 	a := auth.NewAuth(DB)
 
-	// Initialize network
+	// Initialize network.
 	s := http.Server{}
 	net := network.NewNetwork(configurator.Cfg.NetworkConfiguration.Address, &s)
 	cm := node.NewConnectionManager(net, a)

@@ -2,13 +2,13 @@ package responses
 
 import (
 	"encoding/json"
-	"github.com/telf01/soo/pkg/logger"
+	"github.com/vladimish/soo/pkg/logger"
 	"strconv"
 	"strings"
 )
 
 type Login struct {
-	EncryptedMessage string `json:"encrypted_message"`
+	CheckoutMessage string `json:"checkout_message"`
 }
 
 func (l *Login) ToJSON() string {

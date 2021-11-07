@@ -24,7 +24,6 @@ const (
 type Node struct {
 	gorm.Model
 	NickName   string `gorm:"size:16; unique"`
-	Hostname   string
 	Note       string
 	AvatarPath uuid.UUID
 	Status     Status

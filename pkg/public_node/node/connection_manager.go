@@ -1,14 +1,14 @@
 package node
 
 import (
-	"github.com/telf01/soo/pkg/configurator"
-	"github.com/telf01/soo/pkg/logger"
-	"github.com/telf01/soo/pkg/public_node/auth"
-	"github.com/telf01/soo/pkg/public_node/network"
-	"github.com/telf01/soo/pkg/public_node/network/containers"
-	"github.com/telf01/soo/pkg/public_node/network/interfaces"
-	node_models "github.com/telf01/soo/pkg/public_node/node/models"
-	"github.com/telf01/soo/pkg/public_node/persistence/auth_db"
+	"github.com/vladimish/soo/pkg/configurator"
+	"github.com/vladimish/soo/pkg/logger"
+	"github.com/vladimish/soo/pkg/public_node/auth"
+	"github.com/vladimish/soo/pkg/public_node/network"
+	"github.com/vladimish/soo/pkg/public_node/network/containers"
+	"github.com/vladimish/soo/pkg/public_node/network/interfaces"
+	node_models "github.com/vladimish/soo/pkg/public_node/node/models"
+	"github.com/vladimish/soo/pkg/public_node/persistence/auth_db"
 	"net/http"
 )
 
@@ -45,14 +45,13 @@ func (cm *ConnectionManager) HandleRegister(c chan interface{}) {
 		something := <-c
 		rc := something.(containers.RegisterWrapper)
 
-		node, err := cm.a.GetNodeOrNil(rc.R.NickName)
+		node, err := cm.a.GetNodeOrNil(rc.R.Nickname)
 		if err != nil {
 			logger.L.Sugar().Error(err)
 		}
 		if node == nil {
 			n := &node_models.Node{
-				NickName: rc.R.NickName,
-				Hostname: rc.R.Hostname,
+				NickName: rc.R.Nickname,
 				Status:   node_models.REGISTRATION,
 			}
 			cm.a.SaveNode(n)
@@ -69,5 +68,21 @@ func (cm *ConnectionManager) HandleRegister(c chan interface{}) {
 			logger.L.Sugar().Error(err)
 		}
 		rc.WG.Done()
+	}
+}
+
+func (cm *ConnectionManager) HandleVerifyRegister(c chan interface{}) {
+	for {
+		something := <-c
+		vc := something.(containers.VerifyRegisterWrapper)
+
+		authResult, err := cm.a.CheckAuth(vc.R.Signature, vc.R.CheckoutMessage)
+		if err != nil {
+			logger.L.Error(err.Error())
+		}
+
+		logger.L.Sugar().Info(authResult)
+
+		vc.WG.Done()
 	}
 }

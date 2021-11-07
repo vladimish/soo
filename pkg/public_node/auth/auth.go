@@ -1,20 +1,16 @@
 package auth
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/md5"
-	"crypto/rand"
-	"encoding/hex"
+	"encoding/base64"
 	"errors"
 	"github.com/google/uuid"
-	models2 "github.com/telf01/soo/pkg/public_node/auth/models"
-	"github.com/telf01/soo/pkg/public_node/auth/models/responses"
-	"github.com/telf01/soo/pkg/public_node/network/interfaces"
-	"github.com/telf01/soo/pkg/public_node/node/models"
-	"github.com/telf01/soo/pkg/public_node/persistence/auth_db"
+	models2 "github.com/vladimish/soo/pkg/public_node/auth/models"
+	"github.com/vladimish/soo/pkg/public_node/auth/models/responses"
+	"github.com/vladimish/soo/pkg/public_node/network/interfaces"
+	"github.com/vladimish/soo/pkg/public_node/node/models"
+	"github.com/vladimish/soo/pkg/public_node/persistence/auth_db"
+	"golang.org/x/crypto/ed25519"
 	"gorm.io/gorm"
-	"io"
 )
 
 type Auth struct {
@@ -40,35 +36,27 @@ func (a *Auth) GetNodeOrNil(nn string) (*models.Node, error) {
 	return n, nil
 }
 
-func (a *Auth) CheckAuth(n *models.Node) {
-	panic("NOT YET IMPLEMENTED")
+func (a *Auth) CheckAuth(signature string, message string) (bool, error) {
+	ad, err := a.p.GetAuthData(message)
+	if err != nil {
+		return false, err
+	}
+
+	// Unwrap base64 signature to byte array
+	sigBytes := make([]byte, 64)
+	base64.StdEncoding.Decode(sigBytes, []byte(signature))
+	pkBytes := make([]byte, 32)
+	base64.StdEncoding.Decode(pkBytes, []byte(ad.PublicKey))
+
+	return ed25519.Verify(pkBytes, []byte(message), sigBytes), nil
 }
 
 // BuildAuthMessage builds new message, based on AuthData.
 func (a *Auth) BuildAuthMessage(ad models2.AuthData) (interfaces.Responder, error) {
-	block, err := aes.NewCipher([]byte(calculateMD5(ad.SecretMessage)))
-	if err != nil {
-		return nil, err
-	}
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-	nonce := make([]byte, gcm.NonceSize())
-	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
-		return nil, err
-	}
-	ciphertext := gcm.Seal(nonce, nonce, []byte(ad.SecretMessage), nil)
 	r := &responses.Login{
-		EncryptedMessage: string(ciphertext),
+		CheckoutMessage: ad.CheckoutMessage,
 	}
 	return r, nil
-}
-
-func calculateMD5(key string) string {
-	hasher := md5.New()
-	hasher.Write([]byte(key))
-	return hex.EncodeToString(hasher.Sum(nil))
 }
 
 func (a *Auth) CreateAuth(node *models.Node, pk string) (*models2.AuthData, error) {
@@ -77,9 +65,9 @@ func (a *Auth) CreateAuth(node *models.Node, pk string) (*models2.AuthData, erro
 		return nil, err
 	}
 	ta := &models2.AuthData{
-		PublicKey:     pk,
-		SecretMessage: sm.String(),
-		Node:          *node,
+		PublicKey:       pk,
+		CheckoutMessage: sm.String(),
+		Node:            *node,
 	}
 	err = a.p.SaveAuth(ta)
 	if err != nil {

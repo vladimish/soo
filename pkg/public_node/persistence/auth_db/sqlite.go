@@ -1,8 +1,8 @@
 package auth_db
 
 import (
-	"github.com/telf01/soo/pkg/public_node/auth/models"
-	node_models "github.com/telf01/soo/pkg/public_node/node/models"
+	"github.com/vladimish/soo/pkg/public_node/auth/models"
+	node_models "github.com/vladimish/soo/pkg/public_node/node/models"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -53,10 +53,19 @@ func (a *DB) SaveNode(node *node_models.Node) error {
 	return nil
 }
 
-
-func (a *DB) GetAuthData(node node_models.Node) (*models.AuthData, error) {
+func (a *DB) GetAuthData(message string) (*models.AuthData, error) {
 	ad := &models.AuthData{}
-	tx := a.db.Where(models.AuthData{Node: node}).Take(ad)
+	tx := a.db.Where(models.AuthData{CheckoutMessage: message}).Last(ad)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	return ad, nil
+}
+
+func (a *DB) GetLastAuthData(node node_models.Node) (*models.AuthData, error) {
+	ad := &models.AuthData{}
+	tx := a.db.Where(models.AuthData{Node: node}).Last(ad)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}

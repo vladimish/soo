@@ -54,7 +54,6 @@
     class Node{
         NickName : string
         PublicKey : string
-        Hostname : string
         Note : string
         Avatar : Image
         Status : NodeStatus

@@ -1,7 +1,7 @@
 package logger
 
 import (
-	"github.com/telf01/soo/pkg/configurator"
+	"github.com/vladimish/soo/pkg/configurator"
 	"go.uber.org/zap"
 )
 

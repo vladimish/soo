@@ -2,8 +2,8 @@ package network
 
 import (
 	"fmt"
-	"github.com/telf01/soo/pkg/logger"
-	"github.com/telf01/soo/pkg/public_node/network/interfaces"
+	"github.com/vladimish/soo/pkg/logger"
+	"github.com/vladimish/soo/pkg/public_node/network/interfaces"
 	"net/http"
 	"sync"
 )
@@ -33,7 +33,7 @@ func NewContainerSelector() *ContainerSelector {
 }
 
 func (c *ContainerSelector) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	logger.L.Sugar().Info("Connected")
+	logger.L.Sugar().Infof("%s asks on %s", r.Host, r.URL.String())
 	for path := range c.Containers {
 		if path == r.URL.Path {
 			wg := sync.WaitGroup{}
@@ -63,6 +63,7 @@ func (n *Network) BindParser(path string, h interfaces.RequestContainer) {
 
 func (n *Network) SendMessage(w http.ResponseWriter, msg interfaces.Responder) error {
 	fmt.Println(msg.ToJSON())
+	w.Header().Set("Content-Type", "application/json")
 	_, err := w.Write([]byte(msg.ToJSON()))
 	if err != nil {
 		return err
