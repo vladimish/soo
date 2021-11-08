@@ -4,11 +4,13 @@ import (
 	"github.com/vladimish/soo/pkg/configurator"
 	"github.com/vladimish/soo/pkg/logger"
 	"github.com/vladimish/soo/pkg/public_node/auth"
+	"github.com/vladimish/soo/pkg/public_node/auth/models/responses"
 	"github.com/vladimish/soo/pkg/public_node/network"
 	"github.com/vladimish/soo/pkg/public_node/network/containers"
 	"github.com/vladimish/soo/pkg/public_node/network/interfaces"
 	node_models "github.com/vladimish/soo/pkg/public_node/node/models"
 	"github.com/vladimish/soo/pkg/public_node/persistence/auth_db"
+	"github.com/vladimish/soo/pkg/validation"
 	"net/http"
 )
 
@@ -44,6 +46,21 @@ func (cm *ConnectionManager) HandleRegister(c chan interface{}) {
 	for {
 		something := <-c
 		rc := something.(containers.RegisterWrapper)
+
+		// Validate request data
+		err := validation.V.Struct(rc.R)
+		if err != nil {
+			logger.L.Sugar().Error(err)
+			r := responses.Error{
+				Code:    responses.BAD_REQUEST,
+				Message: err.Error(),
+			}
+
+			rc.W.WriteHeader(http.StatusBadRequest)
+			rc.W.Write([]byte(r.ToJSON()))
+			rc.WG.Done()
+			continue
+		}
 
 		node, err := cm.a.GetNodeOrNil(rc.R.Nickname)
 		if err != nil {
