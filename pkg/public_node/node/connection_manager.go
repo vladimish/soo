@@ -98,7 +98,18 @@ func (cm *ConnectionManager) HandleVerifyRegister(c chan interface{}) {
 			logger.L.Error(err.Error())
 		}
 
-		logger.L.Sugar().Info(authResult)
+		rr := responses.RegistrationResult{
+			Result: authResult,
+		}
+
+		if authResult {
+			err := cm.a.ChangeNodeStatus(vc.R.CheckoutMessage, node_models.ACTIVE)
+			if err != nil {
+				logger.L.Sugar().Error(err)
+			}
+		}
+
+		vc.W.Write([]byte(rr.ToJSON()))
 
 		vc.WG.Done()
 	}

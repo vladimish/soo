@@ -8,6 +8,7 @@ import (
 type Persistence interface {
 	GetNode(nickName string) (*node_models.Node, error)
 	SaveNode(node *node_models.Node) error
+	UpdateNode(nodeId int, column string, value interface{}) error
 	GetAuthData(message string) (*models.AuthData, error)
 	GetLastAuthData(node node_models.Node) (*models.AuthData, error)
 	SaveAuth(d *models.AuthData) error

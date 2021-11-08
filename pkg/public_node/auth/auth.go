@@ -79,3 +79,17 @@ func (a *Auth) CreateAuth(node *models.Node, pk string) (*models2.AuthData, erro
 func (a *Auth) SaveNode(node *models.Node) error {
 	return a.p.SaveNode(node)
 }
+
+func (a *Auth) ChangeNodeStatus(message string, status models.Status) error {
+	ad, err := a.p.GetAuthData(message)
+	if err != nil {
+		return err
+	}
+
+	err = a.p.UpdateNode(ad.NodeID, "status", models.ACTIVE)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

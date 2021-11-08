@@ -5,12 +5,12 @@ import (
 	"github.com/vladimish/soo/pkg/logger"
 )
 
-type Login struct {
-	CheckoutMessage string `json:"checkout_message"`
+type RegistrationResult struct {
+	Result bool `json:"result"`
 }
 
-func (l *Login) ToJSON() string {
-	res, err := json.Marshal(l)
+func (rr *RegistrationResult) ToJSON() string {
+	res, err := json.Marshal(rr)
 	if err != nil {
 		logger.L.Sugar().Error(err)
 		return err.Error()

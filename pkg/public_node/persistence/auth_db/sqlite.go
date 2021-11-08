@@ -53,6 +53,15 @@ func (a *DB) SaveNode(node *node_models.Node) error {
 	return nil
 }
 
+func (a *DB) UpdateNode(nodeId int, column string, value interface{}) error {
+	tx := a.db.Model(&node_models.Node{}).Where("id = ?", nodeId).Update(column, value)
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	return nil
+}
+
 func (a *DB) GetAuthData(message string) (*models.AuthData, error) {
 	ad := &models.AuthData{}
 	tx := a.db.Where(models.AuthData{CheckoutMessage: message}).Last(ad)
