@@ -158,12 +158,16 @@ func (cm *ConnectionManager) HandleFindUser(c chan interface{}) {
 				logger.L.Sugar().Error(err)
 			}
 
-			urls := make([]string, len(nodes))
+			rests := make([]responses.Result, len(nodes))
 			for i := range nodes {
-				urls[i] = nodes[i].NickName
+				rests[i] = responses.Result{
+					Name: nodes[i].NickName,
+					URL:  "test",
+				}
 			}
+
 			rr := responses.SearchResult{
-				URL: urls,
+				Results: rests,
 			}
 
 			fu.W.Write([]byte(rr.ToJSON()))
