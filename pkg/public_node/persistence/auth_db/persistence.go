@@ -7,6 +7,7 @@ import (
 
 type Persistence interface {
 	GetNode(nickName string) (*node_models.Node, error)
+	GetNodesLikeOrNil(nickName string, limit int) ([]node_models.Node, error)
 	SaveNode(node *node_models.Node) error
 	UpdateNode(nodeId int, column string, value interface{}) error
 	GetAuthData(message string) (*models.AuthData, error)

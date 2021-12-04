@@ -1,10 +1,14 @@
 package auth_db
 
 import (
+	"github.com/vladimish/soo/pkg/logger"
 	"github.com/vladimish/soo/pkg/public_node/auth/models"
 	node_models "github.com/vladimish/soo/pkg/public_node/node/models"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	gormLogger "gorm.io/gorm/logger"
+	"log"
+	"os"
 )
 
 type DB struct {
@@ -24,7 +28,15 @@ func NewDB(connectionString string) (*DB, error) {
 }
 
 func initializeDB(connectionString string) (*gorm.DB, error) {
-	db, err := gorm.Open(sqlite.Open(connectionString), &gorm.Config{})
+	glog := gormLogger.New(log.New(os.Stdout, "\n", log.LstdFlags), gormLogger.Config{
+		SlowThreshold:             0,
+		Colorful:                  true,
+		IgnoreRecordNotFoundError: false,
+		LogLevel:                  gormLogger.Info,
+	})
+	db, err := gorm.Open(sqlite.Open(connectionString), &gorm.Config{
+		Logger: glog,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -42,6 +54,18 @@ func (a *DB) GetNode(nickName string) (*node_models.Node, error) {
 	}
 
 	return n, nil
+}
+
+func (a *DB) GetNodesLikeOrNil(nickName string, limit int) ([]node_models.Node, error) {
+	var nodes []node_models.Node
+	tx := a.db.Select("*").Table("nodes").Where("nick_name LIKE ?", "%"+nickName+"%").Limit(limit).Take(&nodes)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	logger.L.Sugar().Info(nodes)
+
+	return nodes, nil
 }
 
 func (a *DB) SaveNode(node *node_models.Node) error {

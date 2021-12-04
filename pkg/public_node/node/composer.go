@@ -20,12 +20,14 @@ func NewComposer(cm *ConnectionManager) *Composer {
 
 func (c *Composer) Start() {
 	var h = make(map[string]interfaces.RequestContainer)
-	h[Register] = containers.NewRegister()
-	h[VerifyRegister] = containers.NewVerifyRegister()
+	h[REGISTER] = containers.NewRegister()
+	h[VERIFY_REGISTER] = containers.NewVerifyRegister()
+	h[FIND_USER] = containers.NewFindUser()
 	c.cm.BindConnectionHandlers(h)
 
-	go c.cm.HandleRegister(h[Register].GetChan())
-	go c.cm.HandleVerifyRegister(h[VerifyRegister].GetChan())
+	go c.cm.HandleRegister(h[REGISTER].GetChan())
+	go c.cm.HandleVerifyRegister(h[VERIFY_REGISTER].GetChan())
+	go c.cm.HandleFindUser(h[FIND_USER].GetChan())
 
 	c.cm.StartServer()
 }

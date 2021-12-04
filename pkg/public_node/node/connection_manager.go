@@ -12,6 +12,7 @@ import (
 	"github.com/vladimish/soo/pkg/public_node/persistence/auth_db"
 	"github.com/vladimish/soo/pkg/validation"
 	"net/http"
+	"sync"
 )
 
 type ConnectionManager struct {
@@ -42,25 +43,47 @@ func (cm *ConnectionManager) BindConnectionHandlers(handlers map[string]interfac
 	}
 }
 
+func genericValidation(d interface{}, w http.ResponseWriter, wg *sync.WaitGroup) bool {
+	err := validation.V.Struct(d)
+	logger.L.Sugar().Info("Validating: ", d)
+	if err != nil {
+		logger.L.Sugar().Error(err)
+		r := responses.Error{
+			Code:    responses.BAD_REQUEST,
+			Message: err.Error(),
+		}
+
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(r.ToJSON()))
+		wg.Done()
+
+		return false
+	}
+	return true
+}
+
 func (cm *ConnectionManager) HandleRegister(c chan interface{}) {
 	for {
 		something := <-c
 		rc := something.(containers.RegisterWrapper)
 
 		// Validate request data
-		err := validation.V.Struct(rc.R)
-		if err != nil {
-			logger.L.Sugar().Error(err)
-			r := responses.Error{
-				Code:    responses.BAD_REQUEST,
-				Message: err.Error(),
-			}
-
-			rc.W.WriteHeader(http.StatusBadRequest)
-			rc.W.Write([]byte(r.ToJSON()))
-			rc.WG.Done()
+		if !genericValidation(rc.R, rc.W, rc.WG) {
 			continue
 		}
+		//err := validation.V.Struct(rc.R)
+		//if err != nil {
+		//	logger.L.Sugar().Error(err)
+		//	r := responses.Error{
+		//		Code:    responses.BAD_REQUEST,
+		//		Message: err.Error(),
+		//	}
+		//
+		//	rc.W.WriteHeader(http.StatusBadRequest)
+		//	rc.W.Write([]byte(r.ToJSON()))
+		//	rc.WG.Done()
+		//	continue
+		//}
 
 		node, err := cm.a.GetNodeOrNil(rc.R.Nickname)
 		if err != nil {
@@ -112,5 +135,41 @@ func (cm *ConnectionManager) HandleVerifyRegister(c chan interface{}) {
 		vc.W.Write([]byte(rr.ToJSON()))
 
 		vc.WG.Done()
+	}
+}
+
+func (cm *ConnectionManager) HandleFindUser(c chan interface{}) {
+	for {
+		something := <-c
+		fu := something.(containers.FindUserWrapper)
+
+		if !genericValidation(fu.R, fu.W, fu.WG) {
+			continue
+		}
+
+		authResult, err := cm.a.CheckAuth(fu.R.VerifyRegister.Signature, fu.R.VerifyRegister.CheckoutMessage)
+		if err != nil {
+			logger.L.Error(err.Error())
+		}
+
+		if authResult {
+			nodes, err := cm.a.GetNodesLikeOrNil(fu.R.SearchQuery, fu.R.ResultsAmount)
+			if err != nil {
+				logger.L.Sugar().Error(err)
+			}
+
+			urls := make([]string, len(nodes))
+			for i := range nodes {
+				urls[i] = nodes[i].NickName
+			}
+			rr := responses.SearchResult{
+				URL: urls,
+			}
+
+			fu.W.Write([]byte(rr.ToJSON()))
+		} else {
+			fu.W.WriteHeader(http.StatusUnauthorized)
+		}
+		fu.WG.Done()
 	}
 }

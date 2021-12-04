@@ -25,6 +25,7 @@ func NewAuth(p auth_db.Persistence) *Auth {
 	return &a
 }
 
+// GetNodeOrNil returns last added node with equals nickname.
 func (a *Auth) GetNodeOrNil(nn string) (*models.Node, error) {
 	n, err := a.p.GetNode(nn)
 	if err != nil {
@@ -34,6 +35,10 @@ func (a *Auth) GetNodeOrNil(nn string) (*models.Node, error) {
 		return nil, err
 	}
 	return n, nil
+}
+
+func (a *Auth) GetNodesLikeOrNil(nn string, limit int) ([]models.Node, error) {
+	return a.p.GetNodesLikeOrNil(nn, limit)
 }
 
 func (a *Auth) CheckAuth(signature string, message string) (bool, error) {
